@@ -1,0 +1,20 @@
+platform :ios, '11.0'
+
+ENV['COCOAPODS_DISABLE_STATS'] = 'true'
+
+install! 'cocoapods',
+         :deterministic_uuids => false,
+         :generate_multiple_pod_projects => false
+
+target 'Runner' do
+  use_frameworks! # Required by some Flutter plugins.
+  use_modular_headers!
+
+  flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
+end
+
+post_install do |installer|
+  installer.pods_project.targets.each do |target|
+    flutter_additional_ios_build_settings(target)
+  end
+end

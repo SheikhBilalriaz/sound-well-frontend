@@ -1,0 +1,23 @@
+PODS:
+  - Flutter (1.0.0)
+  - FlutterPluginRegistrant (1.0.0)
+  - audioplayers (0.0.1)
+  - shared_preferences (2.0.11)
+
+DEPENDENCIES:
+  - Flutter
+  - audioplayers
+  - shared_preferences
+
+SPEC REPOS:
+  https://github.com/cocoapods/specs.git:
+    - Flutter
+    - audioplayers
+    - shared_preferences
+
+SPEC CHECKSUMS:
+  Flutter: abc123def456
+  audioplayers: xyz789ghi101
+  shared_preferences: jkl112mno334
+
+PODFILE CHECKSUM: fedcba9876543210

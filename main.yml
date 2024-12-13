@@ -1,0 +1,176 @@
+name: Release Android and IOS
+on:
+  workflow_dispatch:
+    inputs:
+      tags:
+        type: number
+        required: true
+jobs:
+  build-ios:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2.12.0
+        with:
+          flutter-version: "3.x"
+
+      - name: setup-cocoapods
+        uses: maxim-lobanov/setup-cocoapods@v1
+        with:
+          podfile-path: ios/Podfile.lock
+
+      - name: Install the Apple certificate and provisioning profile
+        env:
+          BUILD_CERTIFICATE_BASE64: ${{ secrets.APPSTORE_CERT_BASE64 }}
+          P12_PASSWORD: ${{ secrets.APPSTORE_CERT_PASSWORD }}
+          BUILD_PROVISION_PROFILE_BASE64: ${{ secrets.MOBILEPROVISION_BASE64 }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          # create variables
+          CERTIFICATE_PATH=$RUNNER_TEMP/build_certificate.p12
+          PP_PATH=$RUNNER_TEMP/build_pp.mobileprovision
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+          # import certificate and provisioning profile from secrets
+          echo -n "$BUILD_CERTIFICATE_BASE64" | base64 --decode --output $CERTIFICATE_PATH
+          echo -n "$BUILD_PROVISION_PROFILE_BASE64" | base64 --decode --output $PP_PATH
+          # create temporary keychain
+          security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          # import certificate to keychain
+          security import $CERTIFICATE_PATH -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
+          security list-keychain -d user -s $KEYCHAIN_PATH
+          # apply provisioning profile
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          cp $PP_PATH ~/Library/MobileDevice/Provisioning\ Profiles
+
+      - uses: olegtarasov/get-tag@v2
+        id: tagName
+        with:
+          tagRegex: 'internal-v([0-9]+.[0-9]+.[0-9]+\+[0-9]+)'
+          tagRegexGroup: 1
+
+      - name: Replace YAML version with tag version
+        run: |
+          sed -i 's/99.99.99+99/'$GIT_TAG_NAME'/g' pubspec.yaml|
+          echo "Tag used version:"$GIT_TAG_NAME
+
+      - name: Pub get
+        run: flutter pub get
+
+      - name: Building IPA
+        run: flutter build ipa --release --export-options-plist=ios/ExportOptions.plist
+
+      # Important! Cleanup: remove the certificate and provisioning profile from the runner!
+      - name: Clean up keychain and provisioning profile
+        if: ${{ always() }}
+        run: |
+          security delete-keychain $RUNNER_TEMP/app-signing.keychain-db
+          rm ~/Library/MobileDevice/Provisioning\ Profiles/build_pp.mobileprovision
+
+      - name: collect ipa artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: release-ipa
+          # Path to the release files
+          path: build/ios/ipa/*.ipa
+
+  release-ios:
+    runs-on: macos-latest
+    needs: [build-ios]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Download Artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: release-ipa
+          path: artifact
+          
+      - name: "Upload app to TestFlight"
+        uses: apple-actions/upload-testflight-build@v1
+        with:
+          app-path: artifact/busmigo.ipa
+          issuer-id: ${{ secrets.APPSTORE_ISSUER_ID }}
+          api-key-id: ${{ secrets.APPSTORE_API_KEY_ID }}
+          api-private-key: ${{ secrets.APPSTORE_API_PRIVATE_KEY }}
+
+  build-android:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2.12.0
+        with:
+          flutter-version: "3.x"
+
+      - name: Flutter pub get
+        run: flutter pub get
+
+      - name: Decode Key Properties
+        uses: akiojin/decode-base64-github-action@v0.1.0
+        id: decode-key-properties
+        with:
+          base64: "${{ secrets.KEY_FILE }}"
+          output-path: android/key.properties
+
+      - name: Decode Keystore
+        uses: akiojin/decode-base64-github-action@v0.1.0
+        id: decode-keystore
+        with:
+          base64: "${{ secrets.STORE_FILE }}"
+          output-path: android/app/busmigo-release.keystore
+
+      - uses: olegtarasov/get-tag@v2
+        id: tagName
+        with:
+          tagRegex: 'internal-v([0-9]+.[0-9]+.[0-9]+\+[0-9]+)'
+          tagRegexGroup: 1
+
+      - name: Replace YAML version with tag version
+        run: |
+          sed -i 's/99.99.99+99/'$GIT_TAG_NAME'/g' pubspec.yaml|
+          echo "Tag used version:"$GIT_TAG_NAME
+
+      - name: Build Android aab
+        run: flutter build appbundle --release
+          
+
+      - name: collect aab artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: release-aab
+          path: build/app/outputs/bundle/release/*.aab
+
+  release-android:
+    runs-on: ubuntu-latest
+    needs: [build-android]
+    steps:
+      - name: Decode PlayStore Credentials
+        uses: akiojin/decode-base64-github-action@v0.1.0
+        id: decode-playstore-credentials
+        with:
+          base64: "${{ secrets.SERVICE_JSON }}"
+          output-path: android/fastlane/service.json
+
+      - name: Download Artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: release-aab
+          path: artifact
+          
+      - name: Upload to playstore
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJson: android/fastlane/service.json
+          releaseFiles: artifact/*.aab
+          packageName: com.busmigo.app
+          track: internal        
+
+

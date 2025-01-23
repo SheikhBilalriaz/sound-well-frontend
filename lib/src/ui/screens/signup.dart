@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:sound_well_app/src/ui/screens/login.dart';
+import 'package:sound_well_app/src/ui/screens/pdf_view.dart';
 import 'package:sound_well_app/src/utils/app_assets.dart';
 import 'package:sound_well_app/src/controller/signup_controller.dart';
 import 'package:sound_well_app/src/utils/app_colors.dart';
@@ -8,7 +9,6 @@ import 'package:sound_well_app/src/utils/app_colors.dart';
 class SignUp extends StatefulWidget {
   final String otp;
 
-  // ignore: use_super_parameters
   const SignUp({Key? key, required this.otp}) : super(key: key);
 
   @override
@@ -28,12 +28,12 @@ class _SignUpState extends State<SignUp> {
 
   bool _passwordVisible = false;
   bool _confirmPasswordVisible = false;
+  bool _termsAccepted = false; // Checkbox state
 
   _SignUpState({Key? key, required this.otp});
 
   @override
   Widget build(BuildContext context) {
-    /* Get screen dimensions for responsiveness */
     final double screenWidth = MediaQuery.of(context).size.width;
     final double screenHeight = MediaQuery.of(context).size.height;
 
@@ -47,16 +47,13 @@ class _SignUpState extends State<SignUp> {
       body: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
         child: Padding(
-          /* 5% of screen width */
           padding: EdgeInsets.symmetric(
             horizontal: screenWidth * 0.012,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              /* Top spacing */
               SizedBox(height: screenHeight * 0.1),
-              /* Logo */
               Container(
                 width: screenWidth * 0.4,
                 height: screenHeight * 0.2,
@@ -68,7 +65,6 @@ class _SignUpState extends State<SignUp> {
                 ),
               ),
               const SizedBox(height: 20),
-              /* SignUp Title */
               const Text(
                 'Sign Up',
                 textAlign: TextAlign.center,
@@ -79,7 +75,6 @@ class _SignUpState extends State<SignUp> {
                 ),
               ),
               const SizedBox(height: 30),
-              /* Name Input Field */
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8.0),
                 child: TextFormField(
@@ -182,9 +177,40 @@ class _SignUpState extends State<SignUp> {
                   ),
                 ),
               ),
-              /* Add space before the button */
+
+              // Terms and Conditions Checkbox
+              Row(
+                children: [
+                  Checkbox(
+                    value: _termsAccepted,
+                    onChanged: (value) {
+                      setState(() {
+                        _termsAccepted = value ?? false;
+                      });
+                    },
+                    activeColor: Colors.blue,
+                  ),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () {
+                        // Navigate to PDF screen
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => PDFScreen(),
+                          ),
+                        );
+                      },
+                      child: const Text(
+                        "I accept the Terms and Conditions",
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+
               SizedBox(height: screenHeight * 0.05),
-              /* Sign Up Button */
               SizedBox(
                 width: screenWidth * 0.8,
                 height: 50,
@@ -244,8 +270,27 @@ class _SignUpState extends State<SignUp> {
                       return;
                     }
 
-                    /* Call signup logic */
-                    _signupController.createAccount(firstName, lastName, email, password, otp);
+                    // Check if terms are accepted
+                    if (!_termsAccepted) {
+                      Get.snackbar(
+                        "Error",
+                        "You must accept the terms and conditions",
+                        snackPosition: SnackPosition.BOTTOM,
+                        backgroundColor: Colors.red,
+                        colorText: Colors.white,
+                        duration: const Duration(seconds: 3),
+                      );
+                      return;
+                    }
+
+                    // Call signup logic
+                    _signupController.createAccount(
+                      firstName,
+                      lastName,
+                      email,
+                      password,
+                      otp,
+                    );
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blue,
@@ -264,7 +309,6 @@ class _SignUpState extends State<SignUp> {
                 ),
               ),
               const SizedBox(height: 20),
-              /* Already have an account? Login Link */
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -274,7 +318,6 @@ class _SignUpState extends State<SignUp> {
                   ),
                   TextButton(
                     onPressed: () {
-                      /* Navigate to login page */
                       Get.to(LogIn());
                     },
                     child: const Text(

@@ -6,8 +6,13 @@ import 'package:sound_well_app/src/ui/screens/login.dart';
 import 'package:logger/logger.dart';
 
 class SignupController extends GetxController {
-  createAccount(String first_name, String last_name, String email,
-      String password, String otp) async {
+  createAccount(
+    String first_name,
+    String last_name,
+    String email,
+    String password,
+    String otp,
+  ) async {
     var logger = Logger();
     Get.dialog(
       // ignore: prefer_const_constructors
@@ -32,11 +37,11 @@ class SignupController extends GetxController {
           "last_name": last_name,
           "email": email,
           "password": password,
-          "otp": int.parse(otp),
+          "otp": otp,
         }),
       );
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == 201) {
         Get.back();
         Get.snackbar(
           "Success",

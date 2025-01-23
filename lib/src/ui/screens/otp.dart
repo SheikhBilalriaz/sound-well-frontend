@@ -109,9 +109,10 @@ class _OtpPageState extends State<OtpPage> {
                                 focusNode: _focusNodes[index],
                                 maxLength: 1,
                                 style: const TextStyle(
-                                    color: Colors.white, fontSize: 20),
+                                  color: Colors.white,
+                                  fontSize: 20,
+                                ),
                                 textAlign: TextAlign.center,
-                                keyboardType: TextInputType.number,
                                 decoration: const InputDecoration(
                                   counterText: '',
                                   border: OutlineInputBorder(),

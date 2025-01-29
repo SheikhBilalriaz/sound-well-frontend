@@ -201,9 +201,22 @@ class _SignUpState extends State<SignUp> {
                           ),
                         );
                       },
-                      child: const Text(
-                        "I accept the Terms and Conditions",
-                        style: TextStyle(color: Colors.white),
+                      child: RichText(
+                        text: const TextSpan(
+                          text: "I accept the ",
+                          style: TextStyle(color: Colors.white),
+                          children: [
+                            TextSpan(
+                              text: "Terms and conditions",
+                              style: TextStyle(
+                                color: Colors.blue,
+                                fontWeight: FontWeight.bold,
+                                fontStyle: FontStyle.italic,
+                                fontFamily: 'Serif',
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),

@@ -3,6 +3,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
+import 'package:sound_well_app/src/utils/app_colors.dart';
 
 class PDFScreen extends StatefulWidget {
   @override
@@ -37,7 +38,15 @@ class _PDFScreenState extends State<PDFScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Introduction'),
+        title: const Text(
+          'Terms & conditions',
+          style: TextStyle(
+            fontStyle: FontStyle.italic,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        backgroundColor: AppColors.primaryBlueDark,
+        foregroundColor: Colors.white,
       ),
       body: Center(
         child: _pdfPath.isNotEmpty

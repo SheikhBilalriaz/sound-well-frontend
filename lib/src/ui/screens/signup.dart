@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:sound_well_app/src/ui/screens/login.dart';
@@ -191,32 +192,30 @@ class _SignUpState extends State<SignUp> {
                     activeColor: Colors.blue,
                   ),
                   Expanded(
-                    child: GestureDetector(
-                      onTap: () {
-                        // Navigate to PDF screen
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => PDFScreen(),
-                          ),
-                        );
-                      },
-                      child: RichText(
-                        text: const TextSpan(
-                          text: "I accept the ",
-                          style: TextStyle(color: Colors.white),
-                          children: [
-                            TextSpan(
-                              text: "Terms and conditions",
-                              style: TextStyle(
-                                color: Colors.blue,
-                                fontWeight: FontWeight.bold,
-                                fontStyle: FontStyle.italic,
-                                fontFamily: 'Serif',
-                              ),
+                    child: RichText(
+                      text: TextSpan(
+                        text: "I accept the ",
+                        style: const TextStyle(color: Colors.white),
+                        children: [
+                          TextSpan(
+                            text: "Terms and conditions",
+                            style: const TextStyle(
+                              color: Colors.blue,
+                              fontWeight: FontWeight.bold,
+                              fontStyle: FontStyle.italic,
+                              fontFamily: 'Serif',
                             ),
-                          ],
-                        ),
+                            recognizer: TapGestureRecognizer()
+                              ..onTap = () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => PDFScreen(),
+                                  ),
+                                );
+                              },
+                          ),
+                        ],
                       ),
                     ),
                   ),

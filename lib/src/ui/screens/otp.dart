@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:logger/logger.dart';
 import 'package:sound_well_app/src/ui/screens/signup.dart';
 import 'package:sound_well_app/src/utils/app_colors.dart';
 import 'package:sound_well_app/src/utils/app_assets.dart';
@@ -25,12 +28,57 @@ class _OtpPageState extends State<OtpPage> {
     super.dispose();
   }
 
-  void _onNextPressed() {
+  void _onNextPressed() async {
     String otp = _controllers.map((controller) => controller.text).join();
     if (otp.length == 8) {
-      //TODO: Perform action with the OTP
-      Get.to(() => SignUp(otp: otp));
+      var logger = Logger();
+      Get.dialog(
+        Center(
+          child: CircularProgressIndicator(
+            color: Colors.white,
+            strokeWidth: 5.0,
+          ),
+        ),
+        barrierDismissible: false,
+      );
+      try {
+        const String verifyUrl =
+            "https://thesoundwell-vibro-therapy.longevityproducts.info/backend/api/verification";
+        final response = await http.post(
+          Uri.parse(verifyUrl),
+          headers: {"Content-Type": "application/json"},
+          body: jsonEncode({
+            "otp": otp,
+          }),
+        );
+        Get.back();
+        if (response.statusCode == 200) {
+          Get.to(() => SignUp(otp: otp));
+        } else {
+          final error = jsonDecode(response.body);
+          Get.snackbar(
+            "Error",
+            "OTP Failed: ${error['error_message']}",
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.red,
+            colorText: Colors.white,
+            duration: const Duration(seconds: 3),
+          );
+        }
+      } catch (e) {
+        logger.e(e);
+        Get.back();
+        Get.snackbar(
+          "Error",
+          e.toString(),
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+          duration: const Duration(seconds: 3),
+        );
+      }
     } else {
+      Get.back();
       Get.snackbar(
         "Error",
         "Please fill all 8 characters.",

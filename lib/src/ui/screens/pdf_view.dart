@@ -20,7 +20,7 @@ class _PDFScreenState extends State<PDFScreen> {
   }
 
   Future<void> _loadPdf() async {
-    String pdfPath = await _loadFromAsset('assets', 'app_intro.pdf');
+    String pdfPath = await _loadFromAsset('assets', 'terms_and_privacy_policy.pdf');
     setState(() {
       _pdfPath = pdfPath;
     });
